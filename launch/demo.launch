@@ -8,12 +8,13 @@
     <arg name="cam_info_topic" value="/camera/color/camera_info" />
     <arg name="cam_image_topic" value="/camera/color/image_raw" />
     <arg name="output_frame" value="camera_link" />
+    <arg name="marker_size" value="3" />
   </include>
   
   <include file="$(find realsense2_camera)/launch/rs_rgbd.launch" />
-  <include file = "$(find startupday_demo)/launch/static_transform_publisher.launch"/>
-
+  
+  <node pkg="tf" type="static_transform_publisher" name="camera_xarm7_link" args="0.07 0 0 1.571 -1.571 1.571 link_eef camera_link 100" />
   <node name="transform_pose_marker" pkg="startupday_demo" type="transform_pose_marker.py" output="screen"/>
-  <node name="demo_node" pkg="startupday_demo" type="demo.py" output="screen"/>
+  <!-- <node name="demo_node" pkg="startupday_demo" type="demo.py" output="screen"/> -->
   
 </launch>
