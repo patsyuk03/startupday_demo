@@ -1,5 +1,6 @@
 import rospy, sys, moveit_commander, tf
 from ar_track_alvar_msgs.msg import AlvarMarkers
+import geometry_msgs.msg
 
 boxes_ids = [7, 8]
 cubes_ids = [[0, 1], [2, 4]]
@@ -12,17 +13,20 @@ markers = dict({
 
 def callback(data):
     global markers, found_markers
-    found_markers = list()
+    # found_markers = list()
     for marker in data.markers:
         if marker.id in list(markers.keys()):
-            markers[marker.id][marker.id] = marker.pose.pose
-            found_markers.append(marker.id)
+            if markers[marker.id][marker.id] == 0:
+                markers[marker.id][marker.id] = marker.pose.pose
+                found_markers.append(marker.id)
         elif marker.id in list(markers[boxes_ids[0]].keys()):
-            markers[boxes_ids[0]][marker.id] = marker.pose.pose
-            found_markers.append(marker.id)
+            if markers[boxes_ids[0]][marker.id] == 0:
+                markers[boxes_ids[0]][marker.id] = marker.pose.pose
+                found_markers.append(marker.id)
         elif marker.id in list(markers[boxes_ids[1]].keys()):
-            markers[boxes_ids[1]][marker.id] = marker.pose.pose
-            found_markers.append(marker.id)
+            if markers[boxes_ids[1]][marker.id] == 0:
+                markers[boxes_ids[1]][marker.id] = marker.pose.pose
+                found_markers.append(marker.id)
     
 
 
@@ -31,10 +35,27 @@ class PNPDemo(object):
         moveit_commander.roscpp_initialize(sys.argv)
         rospy.init_node('demo_node', anonymous=True)
         self.robot = moveit_commander.RobotCommander()
+        self.scene = moveit_commander.PlanningSceneInterface()
         self.xarm7 = moveit_commander.MoveGroupCommander("xarm7")
         self.gripper = moveit_commander.MoveGroupCommander("xarm_gripper")
+
+        p = geometry_msgs.msg.PoseStamped()
+        p.header.frame_id = self.robot.get_planning_frame()
+        p.pose.position.x = 0.01
+        p.pose.position.y = 0.00
+        p.pose.position.z = -0.07
+
+        self.scene.add_box("table", p, (1, 1, 0.1))
+
+        p.pose.position.x = -0.44
+        p.pose.position.y = 0.00
+        p.pose.position.z = 0.48
+        p.pose.orientation.y = 0.7068252
+        p.pose.orientation.w = 0.7073883
+
+        self.scene.add_box("wall", p, (1, 1, 0.1))
     
-    def movexArm7(self, box_id, cube_id):
+    def xArm7Move(self, box_id, cube_id):
         pose_goal = self.xarm7.get_current_pose().pose
         marker_pose = markers[box_id][cube_id]
 
@@ -77,7 +98,7 @@ class PNPDemo(object):
     
     def lineMotion(self, direction, cube):
         current_pose = self.xarm7.get_current_pose().pose
-        z = [0.04, 0.07]
+        z = [0.03, 0.07]
         waypoints = []
         if direction == "down1": 
             current_pose.position.z = 0.02
@@ -108,36 +129,39 @@ class PNPDemo(object):
 
 
 def main():
+    global markers, found_markers
     move = PNPDemo()
     rospy.loginfo("Subscribing to ar_pose_marker")
     rospy.Subscriber("/ar_tf_markers", AlvarMarkers, callback)
+    move.Xarm7ToStart()
+    move.Gripper("open")
 
     while not rospy.is_shutdown():
-        inp = input("============ Press `Enter` to start Xarm7 movement")
-        if inp == "stop": 
-            break
-        if inp == "start":
-            move.Xarm7ToStart()
-            move.Gripper("open")
-            break
+        # inp = input("============ Press `Enter` to start Xarm7 movement")
+        # if inp == "stop": 
+        #     break
+        # if inp == "start":
+        #     move.Xarm7ToStart()
+        #     move.Gripper("open")
+        #     break
 
         move.Xarm7ToStart()
         move.Gripper("open")
-        if len(found_markers) == len(marker_ids):
+        if set(found_markers) == set(marker_ids):
             for box_id in list(markers.keys()):
                 rospy.loginfo('Collecting cubes to box: %s', str(box_id))
                 cube = 0
-                cubes_ids = list(markers[box_id].keys())
-                cubes_ids.remove(box_id)
-                for cube_id in cubes_ids:
+                cube_ids = list(markers[box_id].keys())
+                cube_ids.remove(box_id)
+                for cube_id in cube_ids:
                     rospy.loginfo('Going for cube: %s', str(cube_id))
                     move.Xarm7ToStart()
                     move.Gripper("open")
-                    move.movexArm7(box_id, cube_id)
+                    move.xArm7Move(box_id, cube_id)
                     move.lineMotion("down1", cube)
                     move.Gripper("close")
                     move.lineMotion("up", cube)
-                    move.movexArm7(box_id, box_id)
+                    move.xArm7Move(box_id, box_id)
                     move.lineMotion("down2", cube)
                     move.Gripper("open")
                     move.lineMotion("up", cube)
@@ -145,8 +169,37 @@ def main():
                     cube += 1
                     if rospy.is_shutdown():break
                 if rospy.is_shutdown():break
+            if rospy.is_shutdown():break
+            for box_id in list(markers.keys()):
+                rospy.loginfo('Collecting cubes to box: %s', str(box_id))
+                cube = 1
+                cube_ids = list(markers[box_id].keys())
+                cube_ids.remove(box_id)
+                cube_ids.reverse()
+                for cube_id in cube_ids:
+                    rospy.loginfo('Going for cube: %s', str(cube_id))
+                    move.Xarm7ToStart()
+                    move.Gripper("open")
+                    move.xArm7Move(box_id, box_id)
+                    move.lineMotion("down2", cube)
+                    move.Gripper("close")
+                    move.lineMotion("up", cube)
+                    move.xArm7Move(box_id, cube_id)
+                    move.lineMotion("down1", cube)
+                    move.Gripper("open")
+                    move.lineMotion("up", cube)
+                    move.Xarm7ToStart()
+                    cube -= 1
+                    if rospy.is_shutdown():break
+                if rospy.is_shutdown():break
+            if rospy.is_shutdown():break
         else:
             rospy.loginfo('Not all markers are detected. Found markers: %s', str(found_markers))
+        found_markers = list()
+        markers = dict({
+            boxes_ids[0]: dict({cubes_ids[0][0]:0,cubes_ids[0][1]:0,boxes_ids[0]:0}),
+            boxes_ids[1]: dict({cubes_ids[1][0]:0,cubes_ids[1][1]:0,boxes_ids[1]:0})
+        })
 
 if __name__ == '__main__':
     try:
