@@ -135,16 +135,8 @@ def main():
     rospy.Subscriber("/ar_tf_markers", AlvarMarkers, callback)
     move.Xarm7ToStart()
     move.Gripper("open")
-
+    inp = input("============ Press `Enter` to start Xarm7 movement")
     while not rospy.is_shutdown():
-        # inp = input("============ Press `Enter` to start Xarm7 movement")
-        # if inp == "stop": 
-        #     break
-        # if inp == "start":
-        #     move.Xarm7ToStart()
-        #     move.Gripper("open")
-        #     break
-
         move.Xarm7ToStart()
         move.Gripper("open")
         if set(found_markers) == set(marker_ids):
