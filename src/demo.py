@@ -3,7 +3,7 @@ from ar_track_alvar_msgs.msg import AlvarMarkers
 import geometry_msgs.msg
 
 boxes_ids = [7, 8]
-cubes_ids = [[0, 1], [2, 4]]
+cubes_ids = [[0, 1], [2, 5]]
 marker_ids = boxes_ids+cubes_ids[0]+cubes_ids[1]
 found_markers = list()
 markers = dict({
@@ -39,21 +39,24 @@ class PNPDemo(object):
         self.xarm7 = moveit_commander.MoveGroupCommander("xarm7")
         self.gripper = moveit_commander.MoveGroupCommander("xarm_gripper")
 
-        p = geometry_msgs.msg.PoseStamped()
-        p.header.frame_id = self.robot.get_planning_frame()
-        p.pose.position.x = 0.01
-        p.pose.position.y = 0.00
-        p.pose.position.z = -0.07
+        # p = geometry_msgs.msg.PoseStamped()
+        # p.header.frame_id = self.robot.get_planning_frame()
+        # p.pose.position.x = 0.01
+        # p.pose.position.y = 0.00
+        # p.pose.position.z = -0.16
+        # p.pose.position.x = 0.01
+        # p.pose.position.y = 0.00
+        # p.pose.position.z = -0.16
 
-        self.scene.add_box("table", p, (1, 1, 0.1))
+        # self.scene.add_box("table", p, (1, 1, 0.1))
 
-        p.pose.position.x = -0.44
-        p.pose.position.y = 0.00
-        p.pose.position.z = 0.48
-        p.pose.orientation.y = 0.7068252
-        p.pose.orientation.w = 0.7073883
+        # p.pose.position.x = -0.44
+        # p.pose.position.y = 0.00
+        # p.pose.position.z = 0.48
+        # p.pose.orientation.y = 0.7068252
+        # p.pose.orientation.w = 0.7073883
 
-        self.scene.add_box("wall", p, (1, 1, 0.1))
+        # self.scene.add_box("wall", p, (1, 1, 0.1))
     
     def xArm7Move(self, box_id, cube_id):
         pose_goal = self.xarm7.get_current_pose().pose
@@ -84,8 +87,11 @@ class PNPDemo(object):
         pose_goal.position.x = marker_pose.position.x
         pose_goal.position.y = marker_pose.position.y
 
-        self.xarm7.set_pose_target(pose_goal)
-        plan_success, traj, planning_time, error_code = self.xarm7.plan()
+        # self.xarm7.set_pose_target(pose_goal)
+        # plan_success, traj, planning_time, error_code = self.xarm7.plan()
+        waypoints = []
+        waypoints.append(pose_goal)
+        (traj, fraction) = self.xarm7.compute_cartesian_path(waypoints, 0.01, 0.0)
         self.ExecutePlan(traj)
 
     def Gripper(self, state):
@@ -99,9 +105,10 @@ class PNPDemo(object):
     def lineMotion(self, direction, cube):
         current_pose = self.xarm7.get_current_pose().pose
         z = [0.03, 0.07]
+        # z = [-0.04, 0.0]
         waypoints = []
         if direction == "down1": 
-            current_pose.position.z = 0.02
+            current_pose.position.z = -0.04#0.02
         elif direction == "down2":
             current_pose.position.z = z[cube]
         elif direction == "up": 
@@ -114,9 +121,20 @@ class PNPDemo(object):
         self.xarm7.execute(plan, wait=True)
         self.xarm7.clear_pose_targets()
 
+    # def Xarm7ToStart(self):
+    #     joint_goal = self.xarm7.get_current_joint_values()
+    #     joint_goal[0] = 0.56
+    #     joint_goal[1] = -0.27
+    #     joint_goal[2] = 0
+    #     joint_goal[3] = 1.12
+    #     joint_goal[4] = 0
+    #     joint_goal[5] = 1.4
+    #     joint_goal[6] = 0
+    #     self.xarm7.go(joint_goal, wait=True)
+
     def Xarm7ToStart(self):
         joint_goal = self.xarm7.get_current_joint_values()
-        joint_goal[0] = 0
+        joint_goal[0] = 0.56
         joint_goal[1] = -0.7
         joint_goal[2] = 0
         joint_goal[3] = 0.8

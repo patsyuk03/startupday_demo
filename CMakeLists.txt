@@ -24,5 +24,6 @@ include_directories(
 catkin_install_python(PROGRAMS
   src/demo.py
   src/transform_pose_marker.py
+  src/get_pose.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
