@@ -39,24 +39,24 @@ class PNPDemo(object):
         self.xarm7 = moveit_commander.MoveGroupCommander("xarm7")
         self.gripper = moveit_commander.MoveGroupCommander("xarm_gripper")
 
-        # p = geometry_msgs.msg.PoseStamped()
-        # p.header.frame_id = self.robot.get_planning_frame()
-        # p.pose.position.x = 0.01
-        # p.pose.position.y = 0.00
-        # p.pose.position.z = -0.16
-        # p.pose.position.x = 0.01
-        # p.pose.position.y = 0.00
-        # p.pose.position.z = -0.16
+        p = geometry_msgs.msg.PoseStamped()
+        p.header.frame_id = self.robot.get_planning_frame()
+        p.pose.position.x = 0.01
+        p.pose.position.y = 0.00
+        p.pose.position.z = -0.16
+        p.pose.position.x = 0.01
+        p.pose.position.y = 0.00
+        p.pose.position.z = -0.16
 
-        # self.scene.add_box("table", p, (1, 1, 0.1))
+        self.scene.add_box("table", p, (1, 1, 0.1))
 
-        # p.pose.position.x = -0.44
-        # p.pose.position.y = 0.00
-        # p.pose.position.z = 0.48
-        # p.pose.orientation.y = 0.7068252
-        # p.pose.orientation.w = 0.7073883
+        p.pose.position.x = -0.44
+        p.pose.position.y = 0.00
+        p.pose.position.z = 0.48
+        p.pose.orientation.y = 0.7068252
+        p.pose.orientation.w = 0.7073883
 
-        # self.scene.add_box("wall", p, (1, 1, 0.1))
+        self.scene.add_box("wall", p, (1, 1, 0.1))
     
     def xArm7Move(self, box_id, cube_id):
         pose_goal = self.xarm7.get_current_pose().pose
@@ -108,7 +108,7 @@ class PNPDemo(object):
         # z = [-0.04, 0.0]
         waypoints = []
         if direction == "down1": 
-            current_pose.position.z = -0.04#0.02
+            current_pose.position.z = 0.02
         elif direction == "down2":
             current_pose.position.z = z[cube]
         elif direction == "up": 
@@ -134,7 +134,7 @@ class PNPDemo(object):
 
     def Xarm7ToStart(self):
         joint_goal = self.xarm7.get_current_joint_values()
-        joint_goal[0] = 0.56
+        joint_goal[0] = 0
         joint_goal[1] = -0.7
         joint_goal[2] = 0
         joint_goal[3] = 0.8
